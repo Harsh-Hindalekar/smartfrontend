@@ -1,34 +1,35 @@
-import * as tf from "@tensorflow/tfjs";
+// quickdraw.js
+export function analyzeStroke(points) {
+  if (!points || points.length < 5) return null;
 
-let model = null;
+  const start = points[0];
+  const end = points[points.length - 1];
 
-export async function loadModel() {
-  if (model) return model;
-  model = await tf.loadLayersModel(
-    "https://storage.googleapis.com/tfjs-models/tfjs/quickdraw/model.json"
-  );
-  return model;
-}
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const dist = Math.hypot(dx, dy);
 
-export async function recognize(points) {
-  const mdl = await loadModel();
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
 
-  // Flatten + normalize
-  const flat = points.flatMap(p => [p.x / 800, p.y / 500]);
-  const input = new Array(784).fill(0);
-  flat.slice(0, 784).forEach((v, i) => input[i] = v);
-
-  const tensor = tf.tensor(input, [1, 784]);
-  const prediction = mdl.predict(tensor);
-  const data = await prediction.data();
-
-  let max = 0, index = 0;
-  data.forEach((v, i) => {
-    if (v > max) {
-      max = v;
-      index = i;
-    }
+  points.forEach(p => {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
   });
 
-  return { index, confidence: max };
+  const width = maxX - minX;
+  const height = maxY - minY;
+
+  const closed = Math.hypot(end.x - start.x, end.y - start.y) < 20;
+
+  return {
+    width,
+    height,
+    ratio: width / height,
+    closed,
+    length: dist,
+    points
+  };
 }

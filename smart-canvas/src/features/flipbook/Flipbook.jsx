@@ -27,7 +27,7 @@ export default function Flipbook() {
     }, 700);
   }
 
-  return (
+  return ( 
     <div style={{ padding: "20px" }}>
       <h2>📖 Flipbook</h2>
       <p>Add text frames and preview them as animation.</p>
