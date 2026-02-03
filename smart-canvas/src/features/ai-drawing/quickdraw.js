@@ -1,16 +1,18 @@
-// quickdraw.js
 export function analyzeStroke(points) {
   if (!points || points.length < 5) return null;
 
   const start = points[0];
   const end = points[points.length - 1];
 
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const dist = Math.hypot(dx, dy);
-
   let minX = Infinity, minY = Infinity;
   let maxX = -Infinity, maxY = -Infinity;
+  let length = 0;
+
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i-1].x;
+    const dy = points[i].y - points[i-1].y;
+    length += Math.hypot(dx, dy);
+  }
 
   points.forEach(p => {
     minX = Math.min(minX, p.x);
@@ -21,15 +23,8 @@ export function analyzeStroke(points) {
 
   const width = maxX - minX;
   const height = maxY - minY;
+  const ratio = width / (height || 1);
+  const closed = Math.hypot(end.x - start.x, end.y - start.y) < 25;
 
-  const closed = Math.hypot(end.x - start.x, end.y - start.y) < 20;
-
-  return {
-    width,
-    height,
-    ratio: width / height,
-    closed,
-    length: dist,
-    points
-  };
+  return { width, height, ratio, closed, length };
 }
