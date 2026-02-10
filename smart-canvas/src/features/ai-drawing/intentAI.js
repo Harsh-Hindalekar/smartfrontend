@@ -1,5 +1,11 @@
 import { analyzeStroke } from "./quickdraw";
 
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function safeAcos(v) {
+  return Math.acos(clamp(v, -1, 1));
+}
+
 function countCorners(points) {
   let corners = 0;
 
@@ -14,30 +20,35 @@ function countCorners(points) {
 
     if (a * b === 0) continue;
 
-    const angle = Math.acos((a*a + b*b - c*c) / (2*a*b)) * (180 / Math.PI);
+    const ang = safeAcos((a * a + b * b - c * c) / (2 * a * b)) * (180 / Math.PI);
 
-    if (angle < 120) corners++; // sharp turn
+    if (ang < 120) corners++;
   }
 
   return corners;
 }
 
 function isCircle(points) {
-  const xs = points.map(p => p.x);
-  const ys = points.map(p => p.y);
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
 
-  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
 
-  const radii = points.map(p => Math.hypot(p.x - cx, p.y - cy));
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+
+  const radii = points.map((p) => Math.hypot(p.x - cx, p.y - cy));
   const avg = radii.reduce((a, b) => a + b, 0) / radii.length;
 
-  const variance =
-    radii.reduce((sum, r) => sum + Math.pow(r - avg, 2), 0) / radii.length;
+  const variance = radii.reduce((sum, r) => sum + (r - avg) ** 2, 0) / radii.length;
 
-  return variance < 150;
+  // tighter than before
+  return variance < 120;
 }
-//helper function for detectIntentAI
+
 function isLine(points) {
   const start = points[0];
   const end = points[points.length - 1];
@@ -45,24 +56,42 @@ function isLine(points) {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const length = Math.hypot(dx, dy);
+  if (length < 60) return false;
 
-  if (length < 40) return false;
-
-  // measure how far points deviate from straight line
+  // average distance from line
   let totalError = 0;
-
-  for (let p of points) {
-    const area = Math.abs(
-      (end.x - start.x) * (start.y - p.y) -
-      (start.x - p.x) * (end.y - start.y)
-    );
-    const dist = area / length;
-    totalError += dist;
+  for (const p of points) {
+    const area = Math.abs((end.x - start.x) * (start.y - p.y) - (start.x - p.x) * (end.y - start.y));
+    totalError += area / length;
   }
-
   const avgError = totalError / points.length;
 
-  return avgError < 6; // smaller = straighter
+  return avgError < 6;
+}
+
+function isSquare(points, bounds) {
+  const { width, height } = bounds;
+  const ratio = width / (height || 1);
+
+  if (ratio < 0.85 || ratio > 1.15) return false;
+
+  let rightishTurns = 0;
+  for (let i = 2; i < points.length; i++) {
+    const p0 = points[i - 2];
+    const p1 = points[i - 1];
+    const p2 = points[i];
+
+    const a1 = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+    const a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+    let diff = Math.abs(a2 - a1);
+    if (diff > Math.PI) diff = 2 * Math.PI - diff;
+
+    // around 90 degrees
+    if (diff > 1.05 && diff < 2.2) rightishTurns++;
+  }
+
+  return rightishTurns >= 3;
 }
 
 function isDiamond(points) {
@@ -79,80 +108,49 @@ function isDiamond(points) {
     let diff = Math.abs(a2 - a1);
     if (diff > Math.PI) diff = 2 * Math.PI - diff;
 
-    if (diff > 1) sharpTurns++;
+    if (diff > 0.95) sharpTurns++;
   }
 
-  return sharpTurns >= 4 && sharpTurns <= 10;
-}
-//helper function for detectIntentAI square
-function isSquare(points, bounds) {
-  const { width, height } = bounds;
-  const ratio = width / height;
-
-  // Must be almost equal width & height
-  if (ratio < 0.85 || ratio > 1.15) return false;
-
-  // Check if shape has 4 strong corners
-  let corners = 0;
-
-  for (let i = 2; i < points.length; i++) {
-    const p0 = points[i - 2];
-    const p1 = points[i - 1];
-    const p2 = points[i];
-
-    const a1 = Math.atan2(p1.y - p0.y, p1.x - p0.x);
-    const a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-    let diff = Math.abs(a2 - a1);
-    if (diff > Math.PI) diff = 2 * Math.PI - diff;
-
-    // 90° corner ≈ 1.57 radians
-    if (diff > 1.2 && diff < 2.2) corners++;
-  }
-
-  return corners >= 3 && corners <= 8;
+  return sharpTurns >= 4;
 }
 
-
-//main function to detect intent
 export function detectIntent(points) {
   const d = analyzeStroke(points);
   if (!d) return "free";
 
   const { ratio, closed, length, width, height } = d;
 
+  // OPEN SHAPES
   if (!closed) {
     if (isLine(points)) return "line";
     return "free";
   }
 
-  // 🔺 TRIANGLE
+  // Triangle first (so it doesn't get eaten by circle)
   const corners = countCorners(points);
-  if (corners >= 2 && corners <= 5 && length < 500) {
+  if (corners >= 2 && corners <= 5 && length < 650) {
     return "triangle";
   }
 
-  // 💎 DIAMOND (tilted square)
+  // Diamond
   if (isDiamond(points) && ratio > 0.75 && ratio < 1.25) {
     return "diamond";
   }
 
-  // ⬛ SQUARE (better detection)
+  // Square
   if (isSquare(points, { width, height })) {
     return "square";
   }
 
-  // ⚪ CIRCLE
-  if (isCircle(points) && length > 120) {
+  // Circle
+  if (isCircle(points) && length > 140 && ratio > 0.8 && ratio < 1.25) {
     return "circle";
   }
 
-  // ▭ RECTANGLE
+  // Rectangle
   if (ratio >= 1.2 || ratio <= 0.8) {
     return "rectangle";
   }
 
   return "free";
 }
-
-

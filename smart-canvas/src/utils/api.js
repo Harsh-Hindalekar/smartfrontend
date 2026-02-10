@@ -5,28 +5,36 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // Export API base for components that need it
 export const API_BASE_URL = API_URL;
 
+async function safeJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return { detail: "Invalid server response" };
+  }
+}
+
 async function apiCall(endpoint, method = 'GET', body = null, token = null) {
-  const headers = {
-    'Content-Type': 'application/json',
-  };
+  const headers = { 'Content-Type': 'application/json' };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const config = {
-    method,
-    headers,
-  };
-
-  if (body) {
-    config.body = JSON.stringify(body);
-  }
+  const config = { method, headers };
+  if (body) config.body = JSON.stringify(body);
 
   console.log('API Request:', `${API_URL}${endpoint}`, config);
 
-  const response = await fetch(`${API_URL}${endpoint}`, config);
-  const data = await response.json();
+  let response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, config);
+  } catch (err) {
+    return { detail: "Network error / server not reachable" };
+  }
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    return data?.detail ? data : { detail: "Request failed" };
+  }
 
   return data;
 }
@@ -34,21 +42,32 @@ async function apiCall(endpoint, method = 'GET', body = null, token = null) {
 // ========== AUTH FUNCTIONS ==========
 
 export async function loginUser(username, password) {
+  // frontend safety (won't break)
+  const u = (username || "").trim();
+
   const formData = new URLSearchParams();
-  formData.append('username', username);
-  formData.append('password', password);
+  formData.append('username', u);
+  formData.append('password', password || "");
 
-  const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData,
+    });
+  } catch (err) {
+    return { detail: "Network error / server not reachable" };
+  }
 
-  const data = await response.json();
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    return data?.detail ? data : { detail: "Login failed" };
+  }
+
   return data;
-}   
+}
 
 export async function registerUser(name, email, username, password) {
   return apiCall('/register', 'POST', { name, email, username, password });
@@ -57,7 +76,6 @@ export async function registerUser(name, email, username, password) {
 export async function getProfile() {
   const token = localStorage.getItem('token');
   if (!token) return null;
-
   return apiCall('/user/profile', 'GET', null, token);
 }
 
@@ -73,7 +91,6 @@ export async function recognizeGoogle(points) {
 export async function smoothStroke(strokes) {
   const token = localStorage.getItem('token');
 
-  // Try backend if API_URL is set
   if (API_URL) {
     try {
       return await apiCall('/smooth_stroke', 'POST', { strokes }, token);
@@ -82,6 +99,5 @@ export async function smoothStroke(strokes) {
     }
   }
 
-  // Client-side fallback
   return { points: strokes.map(s => (typeof s === 'string' ? s.trim() : String(s))) };
 }

@@ -6,7 +6,7 @@ import Profile from "./pages/Profile";
 // Feature imports
 import CanvasHost from "./features/webcam-drawing/CanvasHost";
 import AiDrawing from "./features/ai-drawing/AiDrawing";
-import Flipbook from "./features/flipbook/Flipbook";
+import Flipbook from "./features/flipbook/Flipaclip";
 // Auth protection
 import ProtectedRoute from "./components/ProtectedRoute";
 

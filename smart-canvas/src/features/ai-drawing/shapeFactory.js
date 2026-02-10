@@ -1,6 +1,6 @@
 export function makeShape(type, points) {
-  const xs = points.map(p => p.x);
-  const ys = points.map(p => p.y);
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
 
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
@@ -14,54 +14,62 @@ export function makeShape(type, points) {
 
   switch (type) {
     case "circle": {
-      const r = Math.min(w, h) / 2;
-      return Array.from({ length: 60 }, (_, i) => {
-        const a = (i / 60) * Math.PI * 2;
+      const r = Math.max(6, Math.min(w, h) / 2);
+      const N = 64;
+      return Array.from({ length: N + 1 }, (_, i) => {
+        const a = (i / N) * Math.PI * 2;
         return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
       });
     }
 
     case "square": {
-      const size = Math.min(w, h);
+      const size = Math.max(10, Math.min(w, h));
+      const x0 = cx - size / 2;
+      const y0 = cy - size / 2;
       return [
-        { x: cx - size/2, y: cy - size/2 },
-        { x: cx + size/2, y: cy - size/2 },
-        { x: cx + size/2, y: cy + size/2 },
-        { x: cx - size/2, y: cy + size/2 },
-        { x: cx - size/2, y: cy - size/2 }
+        { x: x0, y: y0 },
+        { x: x0 + size, y: y0 },
+        { x: x0 + size, y: y0 + size },
+        { x: x0, y: y0 + size },
+        { x: x0, y: y0 },
       ];
     }
 
-    case "rectangle":
+    case "rectangle": {
       return [
         { x: minX, y: minY },
         { x: maxX, y: minY },
         { x: maxX, y: maxY },
         { x: minX, y: maxY },
-        { x: minX, y: minY }
+        { x: minX, y: minY },
       ];
+    }
 
-    case "triangle":
+    case "triangle": {
       return [
         { x: cx, y: minY },
         { x: maxX, y: maxY },
         { x: minX, y: maxY },
-        { x: cx, y: minY }
+        { x: cx, y: minY },
       ];
+    }
 
-    case "line":
-      return [
-        { x: minX, y: minY },
-        { x: maxX, y: maxY }
-      ];
-    case "diamond":
+    case "diamond": {
       return [
         { x: cx, y: minY },
         { x: maxX, y: cy },
         { x: cx, y: maxY },
         { x: minX, y: cy },
-        { x: cx, y: minY }
+        { x: cx, y: minY },
       ];
+    }
+
+    case "line": {
+      return [
+        { x: minX, y: minY },
+        { x: maxX, y: maxY },
+      ];
+    }
 
     default:
       return points;
