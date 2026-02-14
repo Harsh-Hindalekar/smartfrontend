@@ -24,7 +24,7 @@
   overflow: hidden;
 }
 
-/* Inner soft panel (like screenshot) */
+/* Inner soft panel  */
 .dbShell::before{
   content:"";
   position:absolute;

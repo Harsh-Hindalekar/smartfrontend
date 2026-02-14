@@ -5,7 +5,6 @@ import "./Dashboard.css";
 
 // Put these images in: src/assets/dashboard/
 import settingIco from "../assets/setting.png";
-import profileIco from "../assets/profile.png";
 
 import airImg from "../assets/air1.png";
 import smartImg from "../assets/smart.png";
@@ -50,15 +49,7 @@ export default function Dashboard() {
           </div>
           <div className="dbTopText">Setting</div>
         </Link>
-
-        {/* Top Right - Profile */}
-        <Link to="/Profile" className="dbTopLink dbRight">
-          <div className="dbTopIcon">
-            <img src={profileIco} alt="Profile" />
-          </div>
-          <div className="dbTopText">Profile</div>
-        </Link>
-
+        
         {/* Title Ribbon */}
         <div className="dbTitleRow">
           <div className="dbRibbon">
