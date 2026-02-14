@@ -24,11 +24,11 @@ export function makeShape(type, points) {
     case "square": {
       const size = Math.min(w, h);
       return [
-        { x: cx - size/2, y: cy - size/2 },
-        { x: cx + size/2, y: cy - size/2 },
-        { x: cx + size/2, y: cy + size/2 },
-        { x: cx - size/2, y: cy + size/2 },
-        { x: cx - size/2, y: cy - size/2 }
+        { x: cx - size / 2, y: cy - size / 2 },
+        { x: cx + size / 2, y: cy - size / 2 },
+        { x: cx + size / 2, y: cy + size / 2 },
+        { x: cx - size / 2, y: cy + size / 2 },
+        { x: cx - size / 2, y: cy - size / 2 }
       ];
     }
 

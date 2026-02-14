@@ -1,9 +1,5 @@
 import { analyzeStroke } from "./quickdraw";
 
-function safeAcos(v) {
-  return Math.acos(Math.max(-1, Math.min(1, v)));
-}
-
 function countCorners(points) {
   let corners = 0;
 
@@ -18,7 +14,10 @@ function countCorners(points) {
 
     if (a * b === 0) continue;
 
-    const angle = safeAcos((a * a + b * b - c * c) / (2 * a * b)) * (180 / Math.PI);
+    const cos = (a * a + b * b - c * c) / (2 * a * b);
+    const clamped = Math.max(-1, Math.min(1, cos));
+    const angle = Math.acos(clamped) * (180 / Math.PI);
+
     if (angle < 120) corners++;
   }
 
@@ -26,17 +25,19 @@ function countCorners(points) {
 }
 
 function isCircle(points) {
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
 
   const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
   const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
 
-  const radii = points.map((p) => Math.hypot(p.x - cx, p.y - cy));
+  const radii = points.map(p => Math.hypot(p.x - cx, p.y - cy));
   const avg = radii.reduce((a, b) => a + b, 0) / radii.length;
 
   const variance = radii.reduce((sum, r) => sum + Math.pow(r - avg, 2), 0) / radii.length;
-  return variance < 150;
+
+  // slightly stricter to stop triangle/square becoming circle
+  return variance < 120;
 }
 
 function isLine(points) {
@@ -50,8 +51,12 @@ function isLine(points) {
   if (length < 40) return false;
 
   let totalError = 0;
+
   for (let p of points) {
-    const area = Math.abs((end.x - start.x) * (start.y - p.y) - (start.x - p.x) * (end.y - start.y));
+    const area = Math.abs(
+      (end.x - start.x) * (start.y - p.y) -
+      (start.x - p.x) * (end.y - start.y)
+    );
     const dist = area / length;
     totalError += dist;
   }
@@ -77,16 +82,17 @@ function isDiamond(points) {
     if (diff > 1) sharpTurns++;
   }
 
-  return sharpTurns >= 4 && sharpTurns <= 10;
+  return sharpTurns >= 4 && sharpTurns <= 12;
 }
 
 function isSquare(points, bounds) {
   const { width, height } = bounds;
-  const ratio = width / height;
+  const ratio = width / (height || 1);
 
   if (ratio < 0.85 || ratio > 1.15) return false;
 
   let corners = 0;
+
   for (let i = 2; i < points.length; i++) {
     const p0 = points[i - 2];
     const p1 = points[i - 1];
@@ -101,7 +107,7 @@ function isSquare(points, bounds) {
     if (diff > 1.2 && diff < 2.2) corners++;
   }
 
-  return corners >= 3 && corners <= 8;
+  return corners >= 3 && corners <= 10;
 }
 
 export function detectIntent(points) {
@@ -115,20 +121,16 @@ export function detectIntent(points) {
     return "free";
   }
 
-  // Prefer circle check BEFORE triangle (prevents triangle triggering on circles)
-  if (isCircle(points) && length > 120) return "circle";
-
-  // Triangle
+  // priority: triangle -> diamond -> square -> circle -> rectangle
   const corners = countCorners(points);
   if (corners >= 2 && corners <= 5 && length < 500) return "triangle";
 
-  // Diamond
   if (isDiamond(points) && ratio > 0.75 && ratio < 1.25) return "diamond";
 
-  // Square
   if (isSquare(points, { width, height })) return "square";
 
-  // Rectangle
+  if (isCircle(points) && length > 120) return "circle";
+
   if (ratio >= 1.2 || ratio <= 0.8) return "rectangle";
 
   return "free";
