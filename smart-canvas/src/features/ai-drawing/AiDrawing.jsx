@@ -67,14 +67,10 @@ export default function AiDrawing() {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    // CSS coords inside element
+    // CSS coords inside element — canvas context is transformed for DPR so use CSS pixels
     const cx = clientX - rect.left;
     const cy = clientY - rect.top;
-
-    // Map CSS pixels -> canvas internal pixels (accounts for DPR / CSS scaling)
-    const scaleX = canvas.width / rect.width || 1;
-    const scaleY = canvas.height / rect.height || 1;
-    return { x: cx * scaleX, y: cy * scaleY };
+    return { x: cx, y: cy };
   };
 
   const getBounds = (pts) => {
@@ -764,6 +760,7 @@ export default function AiDrawing() {
         onImportImage={onImportImage}
         savePNG={savePNG}
         onClear={() => { if (textEditor) commitTextEditor(); commit([]); setSelectedId(null); }}
+        selectedId={selectedId}
       />
 
       <div className="ai-workspace">

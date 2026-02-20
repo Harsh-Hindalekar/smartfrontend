@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function TopBar({ undo, redo, aiMode, setAiMode, bringFront, sendBack, deleteSelected, onImportImage, savePNG, onClear }) {
+export default function TopBar({ undo, redo, aiMode, setAiMode, bringFront, sendBack, deleteSelected, onImportImage, savePNG, onClear, selectedId }) {
   return (
     <div className="ai-topbar">
       <div className="ai-brand">SmartCanvas</div>
@@ -14,9 +14,9 @@ export default function TopBar({ undo, redo, aiMode, setAiMode, bringFront, send
 
       <div className="ai-spacer" />
 
-      <button className="ai-nav-btn" onClick={bringFront} disabled={!deleteSelected ? false : undefined}>Bring Front</button>
-      <button className="ai-nav-btn" onClick={sendBack} disabled={!deleteSelected ? false : undefined}>Send Back</button>
-      <button className="ai-nav-btn" onClick={deleteSelected} disabled={!deleteSelected ? true : undefined}>Delete</button>
+      <button className="ai-nav-btn" onClick={bringFront} disabled={!selectedId}>Bring Front</button>
+      <button className="ai-nav-btn" onClick={sendBack} disabled={!selectedId}>Send Back</button>
+      <button className="ai-nav-btn" onClick={deleteSelected} disabled={!selectedId}>Delete</button>
 
       <div style={{ width: 8 }} />
 
