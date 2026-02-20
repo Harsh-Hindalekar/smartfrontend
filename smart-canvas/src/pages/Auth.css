@@ -1,0 +1,156 @@
+/* ===== RESET & LAYOUT ===== */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #67b3f0, #49a6e9);
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ===== AUTH CARD ===== */
+.auth-card {
+  background-color: #e6f1ff;
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid #333; /* Hand-drawn border effect */
+  text-align: center;
+}
+
+/* ===== BRANDING SECTION ===== */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-logo {
+  width: 80px;
+  height: 80px;
+  background: #f7ce46;
+  border-radius: 50%;
+  margin-bottom: 0.8rem;
+  border: 2px solid #333;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* The "S" curve in the logo */
+.auth-logo::after {
+  content: "";
+  width: 30px;
+  height: 50px;
+  border: 6px solid #357fe0;
+  border-radius: 50% 0 50% 0;
+  border-top: none;
+  border-bottom: none;
+  transform: rotate(15deg);
+}
+
+.auth-title-login {
+  color: #ff80ff; /* Pink from your image */
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== FORM ===== */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.auth-field label {
+  font-size: 0.9rem;
+  color: #000;
+  margin-bottom: 0.4rem;
+  font-weight: 800;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: 2px solid #333;
+  outline: none;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.auth-input.error {
+  border-color: #e14a4a;
+  background: #ffe8e8;
+}
+
+.field-error {
+  color: #e14a4a;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  font-weight: 600;
+}
+
+/* ===== LOGIN BUTTON (GREEN) ===== */
+.auth-btn-login {
+  background: #24b47e; /* Green from your image */
+  color: #000;
+  border: 2px solid #333;
+  padding: 0.6rem 2.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin: 0.5rem auto;
+  transition: transform 0.1s;
+}
+
+.auth-btn-login:hover {
+  background: #1e9668;
+  transform: scale(1.03);
+}
+
+.auth-btn-login:disabled {
+  background: #7fb0ea;
+  cursor: not-allowed;
+}
+
+/* ===== FOOTER ===== */
+.auth-footer {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.auth-link {
+  color: #000;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .auth-card { width: 85%; padding: 2rem; }
+}

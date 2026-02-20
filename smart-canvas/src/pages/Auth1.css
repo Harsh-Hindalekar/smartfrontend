@@ -1,0 +1,170 @@
+/* ===== GLOBAL RESET ===== */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+/* ===== FULL PAGE CENTERING ===== */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100vw;
+  background: #49a6e9; /* The blue background from your sketch */
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+}
+
+/* ===== HAND-DRAWN CARD CONTAINER ===== */
+.auth-card {
+  background-color: #b3e0ff; /* Light blue card color from sketch */
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  border-radius: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid #333; /* Thick black hand-drawn border */
+  text-align: center;
+}
+
+/* ===== LOGO & BRANDING ===== */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.auth-logo {
+  width: 90px;
+  height: 90px;
+  background: #f7ce46; /* Yellow circle logo */
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+  border: 2px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Blue "S" curve inside logo */
+.auth-logo::after {
+  content: "";
+  width: 30px;
+  height: 50px;
+  border: 6px solid #357fe0;
+  border-radius: 50% 0 50% 0;
+  border-top: none;
+  border-bottom: none;
+  transform: rotate(15deg);
+}
+
+.auth-title-login {
+  color: #ff80ff; /* Pink title color from sketch */
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== FORM STYLING ===== */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem; /* Tight spacing to fit all 5 fields */
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.auth-field label {
+  font-size: 0.85rem;
+  color: #000;
+  margin-bottom: 0.2rem;
+  font-weight: 800;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  border: 2px solid #333; /* Thick border for inputs */
+  background: #fff;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+/* Error state for inputs */
+.auth-input.error {
+  border-color: #e14a4a;
+  background: #ffe8e8;
+}
+
+/* Field-level error text */
+.field-error {
+  color: #e14a4a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* General Error Box (FastAPI Object Crash Fix) */
+.auth-error {
+  background: #ffcccc;
+  color: #b30000;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #b30000;
+  width: 100%;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ===== BUTTONS ===== */
+.auth-btn-sketch {
+  background: #ffffff; /* White button as seen in register sketch */
+  color: #000;
+  border: 2px solid #333;
+  padding: 0.5rem 2rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin: 0.8rem auto 0;
+  width: auto;
+  transition: transform 0.1s;
+}
+
+.auth-btn-sketch:hover {
+  transform: scale(1.05);
+  background: #f0f0f0;
+}
+
+.auth-btn-sketch:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ===== FOOTER LINK ===== */
+.auth-footer {
+  margin-top: 1rem;
+}
+
+.auth-link {
+  color: #357fe0; /* Blue link */
+  font-weight: 800;
+  text-decoration: underline;
+  text-transform: uppercase;
+}

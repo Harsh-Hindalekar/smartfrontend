@@ -3,6 +3,8 @@ import Toolbar from "./components/Toolbar";
 import Timeline from "./components/Timeline";
 import CanvasStage from "./components/CanvasStage";
 import { blankFrame } from "./utils/thumbs";
+import { Link } from "react-router-dom";
+import "./Flipaclip.css";
 
 export default function Flipaclip() {
   const stageRef = useRef(null);   // visible canvas
@@ -40,10 +42,15 @@ export default function Flipaclip() {
 }, [playing, fps, frames.length]); // ✅ do NOT include activeIndex here
 
   return (
-    <div style={{ padding: 16, display: "grid", gap: 12 }}>
-      <h2 style={{ margin: 0 }}>Smart-Canvas • Flipaclip Mode</h2>
+    <div className="fb-page">
+      <div className="fb-card">
+        <div className="fb-header">
+          <Link to="/dashboard" className="fb-back">← Back</Link>
+          <div className="fb-ribbon">Flipaclip</div>
+          <div className="fb-status">{playing ? `Playing • ${fps} FPS` : `Edit Mode`}</div>
+        </div>
 
-      <Toolbar
+        <Toolbar
         playing={playing}
         toolMode={toolMode}
         setToolMode={setToolMode}
@@ -66,35 +73,40 @@ export default function Flipaclip() {
         setSelectedId={setSelectedId}
       />
 
-      <CanvasStage
-        stageRef={stageRef}
-        rasterRef={rasterRef}
-        frames={frames}
-        setFrames={setFrames}
-        activeIndex={activeIndex}
-        activeFrame={activeFrame}
-        prevFrame={prevFrame}
-        toolMode={toolMode}
-        brushTool={brushTool}
-        color={color}
-        size={size}
-        onionSkin={onionSkin}
-        onionOpacity={onionOpacity}
-        playing={playing}
-        selectedId={selectedId}
-        setSelectedId={setSelectedId}
-        setToolMode={setToolMode}
-      />
+        <div className="fb-stage-container">
+          <CanvasStage
+            stageRef={stageRef}
+            rasterRef={rasterRef}
+            frames={frames}
+            setFrames={setFrames}
+            activeIndex={activeIndex}
+            activeFrame={activeFrame}
+            prevFrame={prevFrame}
+            toolMode={toolMode}
+            brushTool={brushTool}
+            color={color}
+            size={size}
+            onionSkin={onionSkin}
+            onionOpacity={onionOpacity}
+            playing={playing}
+            selectedId={selectedId}
+            setSelectedId={setSelectedId}
+            setToolMode={setToolMode}
+          />
+        </div>
 
-      <Timeline
-        frames={frames}
-        activeIndex={activeIndex}
-        setActiveIndex={setActiveIndex}
-        setFrames={setFrames}
-        setPlaying={setPlaying}
-        setSelectedId={setSelectedId}
-        setToolMode={setToolMode}
-      />
+        <div style={{ marginTop: 6 }}>
+          <Timeline
+            frames={frames}
+            activeIndex={activeIndex}
+            setActiveIndex={setActiveIndex}
+            setFrames={setFrames}
+            setPlaying={setPlaying}
+            setSelectedId={setSelectedId}
+            setToolMode={setToolMode}
+          />
+        </div>
+      </div>
     </div>
   );
 }

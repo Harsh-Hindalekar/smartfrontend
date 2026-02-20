@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../utils/api";
+import "./Auth.css";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // NEW
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // NEW: simple validators
   const validate = () => {
     const errs = {};
     const u = username.trim();
@@ -45,7 +42,6 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await loginUser(username.trim(), password);
-
       if (data.access_token) {
         localStorage.setItem("token", data.access_token);
         navigate("/dashboard");
@@ -60,52 +56,57 @@ export default function Login() {
   }
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", padding: "20px" }}>
-      <h2>Login</h2>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-logo" />
+          <h3 className="auth-title-login">ALL IN ONE CREATIVE</h3>
+        </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <div className="auth-error">{error}</div>}
 
-      <form onSubmit={handleSubmit} noValidate>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            if (fieldErrors.username) setFieldErrors((p) => ({ ...p, username: "" }));
-          }}
-          required
-          autoComplete="username"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.username && (
-          <p style={{ color: "red", marginTop: -6, marginBottom: 8 }}>{fieldErrors.username}</p>
-        )}
+        <form onSubmit={handleSubmit} noValidate className="auth-form">
+          <div className="auth-field">
+            <label>USERNAME :</label>
+            <input
+              className={`auth-input ${fieldErrors.username ? 'error' : ''}`}
+              type="text"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (fieldErrors.username) setFieldErrors((p) => ({ ...p, username: "" }));
+              }}
+              required
+              autoComplete="username"
+            />
+            {fieldErrors.username && <div className="field-error">{fieldErrors.username}</div>}
+          </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" }));
-          }}
-          required
-          autoComplete="current-password"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.password && (
-          <p style={{ color: "red", marginTop: -6, marginBottom: 8 }}>{fieldErrors.password}</p>
-        )}
+          <div className="auth-field">
+            <label>PASSWORD :</label>
+            <input
+              className={`auth-input ${fieldErrors.password ? 'error' : ''}`}
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" }));
+              }}
+              required
+              autoComplete="current-password"
+            />
+            {fieldErrors.password && <div className="field-error">{fieldErrors.password}</div>}
+          </div>
 
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: "10px" }}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          <button type="submit" disabled={loading} className="auth-btn-login">
+            {loading ? "LOGGING IN..." : "LOGIN"}
+          </button>
+        </form>
 
-      <p style={{ marginTop: "10px" }}>
-        Don’t have an account? <Link to="/register">Register</Link>
-      </p>
+        <div className="auth-footer">
+          <Link className="auth-link" to="/register">REGISTER</Link>
+        </div>
+      </div>
     </div>
   );
 }

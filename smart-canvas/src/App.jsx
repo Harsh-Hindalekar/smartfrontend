@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import CanvasHost from "./features/webcam-drawing/CanvasHost";
 import AiDrawing from "./features/ai-drawing/AiDrawing";
 import Flipbook from "./features/flipbook/Flipaclip";
+import Settings from "./pages/settings";
 // Auth protection
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -32,6 +33,10 @@ export default function App() {
             <Route
                 path="/flipbook"
                 element={<ProtectedRoute><Flipbook /></ProtectedRoute>}
+            />
+            <Route
+                path="/settings"
+                element={<ProtectedRoute><Settings /></ProtectedRoute>}
             />
         </Routes>
     );

@@ -1,26 +1,21 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../utils/api";
+import "./Auth1.css"; // Ensure your CSS uses the .auth-page centering logic
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // NEW (confirm password)
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [error, setError] = useState("");
-
-  // NEW
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const isStrongPassword = (p) => {
-    // You can relax these if you want
     const hasUpper = /[A-Z]/.test(p);
     const hasLower = /[a-z]/.test(p);
     const hasNumber = /[0-9]/.test(p);
@@ -30,31 +25,12 @@ export default function Register() {
 
   const validate = () => {
     const errs = {};
-    const n = name.trim();
-    const em = email.trim();
-    const u = username.trim();
-    const p = password;
-
-    if (!n) errs.name = "Name is required";
-    else if (n.length < 2) errs.name = "Name must be at least 2 characters";
-    else if (n.length > 50) errs.name = "Name must be max 50 characters";
-
-    if (!em) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) errs.email = "Enter a valid email";
-
-    if (!u) errs.username = "Username is required";
-    else if (u.length < 3) errs.username = "Username must be at least 3 characters";
-    else if (u.length > 30) errs.username = "Username must be max 30 characters";
-    else if (!/^[a-zA-Z0-9_]+$/.test(u)) errs.username = "Only letters, numbers, underscore allowed";
-
-    if (!p) errs.password = "Password is required";
-    else if (p.length < 8) errs.password = "Password must be at least 8 characters";
-    else if (!isStrongPassword(p))
-      errs.password = "Password must have Upper, Lower, Number, Special character";
-
-    if (!confirmPassword) errs.confirmPassword = "Confirm password is required";
-    else if (confirmPassword !== password) errs.confirmPassword = "Passwords do not match";
-
+    if (!name.trim()) errs.name = "Name is required";
+    if (!email.trim()) errs.email = "Email is required";
+    if (!username.trim()) errs.username = "Username is required";
+    if (password.length < 8) errs.password = "Password must be at least 8 characters";
+    if (!isStrongPassword(password)) errs.password = "Password is too weak";
+    if (confirmPassword !== password) errs.confirmPassword = "Passwords do not match";
     return errs;
   };
 
@@ -71,117 +47,114 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // Adjusted call to match your state (name, email, username, password)
       const data = await registerUser(name.trim(), email.trim(), username.trim(), password);
-      console.log("Register response:", data);
-
-      if (!data.detail && !data.msg && data.id) {
+      
+      // FIX FOR THE OBJECT ERROR: Extract the message if it's a 422 object
+      if (data.detail) {
+        const msg = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
+        setError(msg); 
+      } else if (data.id || data.access_token) {
+        if (data.access_token) localStorage.setItem("token", data.access_token);
         navigate("/dashboard");
-      } else if (data.access_token) {
-        localStorage.setItem("token", data.access_token);
-        navigate("/dashboard");
-      } else {
-        setError(data.detail || data.msg || "Registration failed");
       }
     } catch (err) {
       setError("Network or server error");
-      console.error("Register error:", err);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", padding: "20px" }}>
-      <h2>Register</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-logo" />
+          <h3 className="auth-title-login">ALL IN ONE CREATIVE CANVA</h3>
+        </div>
 
-      <form onSubmit={handleSubmit} noValidate>
-        <input
-          type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" }));
-          }}
-          required
-          autoComplete="name"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.name && <p style={{ color: "red", marginTop: -6 }}>{fieldErrors.name}</p>}
+        {error && <div className="auth-error">{error}</div>}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" }));
-          }}
-          required
-          autoComplete="email"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.email && <p style={{ color: "red", marginTop: -6 }}>{fieldErrors.email}</p>}
+        <form onSubmit={handleSubmit} noValidate className="auth-form">
+          <div className="auth-field">
+            <label>NAME :</label>
+            <input
+              className={`auth-input ${fieldErrors.name ? 'error' : ''}`}
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (fieldErrors.name) setFieldErrors(p => ({ ...p, name: "" }));
+              }}
+            />
+            {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
+          </div>
 
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            if (fieldErrors.username) setFieldErrors((p) => ({ ...p, username: "" }));
-          }}
-          required
-          autoComplete="username"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.username && (
-          <p style={{ color: "red", marginTop: -6 }}>{fieldErrors.username}</p>
-        )}
+          <div className="auth-field">
+            <label>USERNAME :</label>
+            <input
+              className={`auth-input ${fieldErrors.username ? 'error' : ''}`}
+              type="text"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (fieldErrors.username) setFieldErrors(p => ({ ...p, username: "" }));
+              }}
+            />
+            {fieldErrors.username && <div className="field-error">{fieldErrors.username}</div>}
+          </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" }));
-          }}
-          required
-          autoComplete="new-password"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.password && (
-          <p style={{ color: "red", marginTop: -6 }}>{fieldErrors.password}</p>
-        )}
+          <div className="auth-field">
+            <label>EMAIL :</label>
+            <input
+              className={`auth-input ${fieldErrors.email ? 'error' : ''}`}
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: "" }));
+              }}
+            />
+            {fieldErrors.email && <div className="field-error">{fieldErrors.email}</div>}
+          </div>
 
-        {/* NEW confirm password */}
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => {
-            setConfirmPassword(e.target.value);
-            if (fieldErrors.confirmPassword)
-              setFieldErrors((p) => ({ ...p, confirmPassword: "" }));
-          }}
-          required
-          autoComplete="new-password"
-          style={{ display: "block", margin: "10px 0", width: "100%" }}
-        />
-        {fieldErrors.confirmPassword && (
-          <p style={{ color: "red", marginTop: -6 }}>{fieldErrors.confirmPassword}</p>
-        )}
+          <div className="auth-field">
+            <label>PASSWORD :</label>
+            <input
+              className={`auth-input ${fieldErrors.password ? 'error' : ''}`}
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldErrors.password) setFieldErrors(p => ({ ...p, password: "" }));
+              }}
+            />
+            {fieldErrors.password && <div className="field-error">{fieldErrors.password}</div>}
+          </div>
 
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: "10px" }}>
-          {loading ? "Registering..." : "Register"}
-        </button>
-      </form>
+          <div className="auth-field">
+            <label>CONFIRM PASSWORD :</label>
+            <input
+              className={`auth-input ${fieldErrors.confirmPassword ? 'error' : ''}`}
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (fieldErrors.confirmPassword) setFieldErrors(p => ({ ...p, confirmPassword: "" }));
+              }}
+            />
+            {fieldErrors.confirmPassword && <div className="field-error">{fieldErrors.confirmPassword}</div>}
+          </div>
 
-      <p style={{ marginTop: "10px" }}>
-        Already have an account? <Link to="/">Login</Link>
-      </p>
+          <button type="submit" disabled={loading} className="auth-btn-sketch">
+            {loading ? "..." : "REGISTER"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <Link className="auth-link" to="/">LOGIN</Link>
+        </div>
+      </div>
     </div>
   );
 }

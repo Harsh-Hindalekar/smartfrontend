@@ -1,3 +1,29 @@
+.auth-logo {
+  width: 80px;
+  height: 80px;
+  background: #f7ce46;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  border: 2px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* A simple "S" curve using a border */
+.auth-logo::after {
+  content: "";
+  width: 30px;
+  height: 50px;
+  border: 6px solid #357fe0;
+  border-radius: 50% 0 50% 0; /* Creates a curved look */
+  border-top: none;
+  border-bottom: none;
+  transform: rotate(15deg);
+}
+
+
 #root {
   max-width: 1280px;
   margin: 0 auto;

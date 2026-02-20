@@ -1,389 +1,173 @@
-// src/features/webcam-drawing/GestureCanvas.jsx
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Hands, HAND_CONNECTIONS } from "@mediapipe/hands";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { Camera } from "@mediapipe/camera_utils";
+import { useNavigate, Link } from "react-router-dom";
 import "./GestureCanvas.css";
 
-function Icon({ children }) {
-  return <span className="gc-icon">{children}</span>;
-}
-
-const Icons = {
-  brush: (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 20c4 0 6-2 6-6 0-1 0-2 1-3l8-8 3 3-8 8c-1 1-2 1-3 1-4 0-6 2-6 6Z" />
-      <path d="M14 6l4 4" />
-    </svg>
-  ),
-  eraser: (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M20 20H8l-4-4 10-10 8 8-6 6Z" />
-      <path d="M6 16l4 4" />
-    </svg>
-  ),
-  save: (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2Z" />
-      <path d="M7 21v-8h10v8" />
-      <path d="M7 3v5h8" />
-    </svg>
-  ),
-  trash: (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 6h18" />
-      <path d="M8 6V4h8v2" />
-      <path d="M6 6l1 16h10l1-16" />
-    </svg>
-  ),
-  mirror: (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 4v16" />
-      <path d="M7 8l-3 4 3 4" />
-      <path d="M17 8l3 4-3 4" />
-    </svg>
-  ),
-};
-
 export default function GestureCanvas() {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
-  const drawCanvasRef = useRef(null);     // permanent drawing
-  const overlayCanvasRef = useRef(null);  // landmarks overlay
+  const drawCanvasRef = useRef(null);
+  const overlayCanvasRef = useRef(null);
   const cameraRef = useRef(null);
   const handsRef = useRef(null);
 
-  // ---- UI state (only updated when needed) ----
-  const [statusText, setStatusText] = useState("Waiting for hand...");
-  const [tool, setTool] = useState("brush"); // brush | eraser
-  const [mirrorView, setMirrorView] = useState(true);
+  const [statusText, setStatusText] = useState("Initializing Artist Mode...");
+  const [tool, setTool] = useState("brush");
+  const [colorUI, setColorUI] = useState("#357fe0"); // Default Artist Blue
+  const [brushUI, setBrushUI] = useState(8);
 
-  const [colorUI, setColorUI] = useState("#111111");
-  const [brushUI, setBrushUI] = useState(6);
-
-  // ---- live refs (NO re-render spam) ----
+  // Refs for logic (prevents laggy re-renders)
   const toolRef = useRef("brush");
-  const colorRef = useRef("#111111");
-  const brushRef = useRef(6);
-  const mirrorRef = useRef(true);
-
-  useEffect(() => { toolRef.current = tool; }, [tool]);
-  useEffect(() => { colorRef.current = colorUI; }, [colorUI]);
-  useEffect(() => { brushRef.current = brushUI; }, [brushUI]);
-  useEffect(() => { mirrorRef.current = mirrorView; }, [mirrorView]);
-
-  // drawing refs
+  const colorRef = useRef("#357fe0");
+  const brushRef = useRef(8);
   const prevPosRef = useRef(null);
   const fistStartRef = useRef(null);
   const lastSaveRef = useRef(0);
 
-  // throttle status updates
-  const lastStatusRef = useRef({ text: "", t: 0 });
-  const setStatusSafe = (text, minGapMs = 180) => {
-    const now = Date.now();
-    const last = lastStatusRef.current;
-    if (text !== last.text && now - last.t > minGapMs) {
-      lastStatusRef.current = { text, t: now };
-      setStatusText(text);
+  useEffect(() => { toolRef.current = tool; }, [tool]);
+  useEffect(() => { colorRef.current = colorUI; }, [colorUI]);
+  useEffect(() => { brushRef.current = brushUI; }, [brushUI]);
+
+  const clearDrawing = () => {
+    const ctx = drawCanvasRef.current?.getContext("2d");
+    if (ctx) {
+      ctx.clearRect(0, 0, drawCanvasRef.current.width, drawCanvasRef.current.height);
+      prevPosRef.current = null;
+      setStatusText("Canvas Cleared! 🎨");
     }
   };
 
-  const getCtx = (ref) => ref.current?.getContext("2d");
-
-  function saveDrawing() {
-    const c = drawCanvasRef.current;
-    if (!c) return;
+  const saveDrawing = () => {
     const link = document.createElement("a");
-    link.download = `gesture_drawing_${Date.now()}.png`;
-    link.href = c.toDataURL("image/png");
+    link.download = `my_artwork_${Date.now()}.png`;
+    link.href = drawCanvasRef.current.toDataURL();
     link.click();
-  }
+    setStatusText("Artwork Saved! ✨");
+  };
 
-  function clearDrawing() {
-    const c = drawCanvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    ctx.clearRect(0, 0, c.width, c.height);
-    prevPosRef.current = null;
-  }
-
-  function isFingerExtended(landmarks, tipIdx, pipIdx) {
-    try { return landmarks[tipIdx].y < landmarks[pipIdx].y; }
-    catch { return false; }
-  }
-
-  // ---- main gesture handler (NO React state spam) ----
   function handleLandmarks(landmarks) {
-    const drawC = drawCanvasRef.current;
-    const overlayC = overlayCanvasRef.current;
-    if (!drawC || !overlayC) return;
+    const drawCtx = drawCanvasRef.current.getContext("2d");
+    const overlayCtx = overlayCanvasRef.current.getContext("2d");
+    const { width, height } = drawCanvasRef.current;
 
-    const drawCtx = getCtx(drawCanvasRef);
-    const overlayCtx = getCtx(overlayCanvasRef);
-    if (!drawCtx || !overlayCtx) return;
+    overlayCtx.clearRect(0, 0, width, height);
+    
+    // Draw skeleton only on overlay
+    drawConnectors(overlayCtx, landmarks, HAND_CONNECTIONS, { color: "#357fe0", lineWidth: 3 });
+    drawLandmarks(overlayCtx, landmarks, { color: "#f7ce46", lineWidth: 1, radius: 4 });
 
-    // clear overlay
-    overlayCtx.clearRect(0, 0, overlayC.width, overlayC.height);
+    // Gesture Detection Logic
+    const isFingerUp = (tip, pip) => landmarks[tip].y < landmarks[pip].y;
+    
+    const indexUp = isFingerUp(8, 6);
+    const middleUp = isFingerUp(12, 10);
+    const ringUp = isFingerUp(16, 14);
+    const pinkyUp = isFingerUp(20, 18);
 
-    // draw skeleton
-    drawConnectors(overlayCtx, landmarks, HAND_CONNECTIONS, { color: "#22c55e", lineWidth: 2 });
-    drawLandmarks(overlayCtx, landmarks, { color: "#ef4444", lineWidth: 1 });
+    const isPointing = indexUp && !middleUp && !ringUp;
+    const isPeace = indexUp && middleUp && !ringUp && !pinkyUp;
+    const isFist = !indexUp && !middleUp && !ringUp && !pinkyUp;
+    const isOpen = indexUp && middleUp && ringUp && pinkyUp;
 
-    const tip = { index: 8, middle: 12, ring: 16, pinky: 20, thumb: 4 };
-    const pip = { index: 6, middle: 10, ring: 14, pinky: 18 };
+    // Coordinate mapping (Mirrored for natural feel)
+    const ix = (1 - landmarks[8].x) * width;
+    const iy = landmarks[8].y * height;
 
-    const indexExtended = isFingerExtended(landmarks, tip.index, pip.index);
-    const middleExtended = isFingerExtended(landmarks, tip.middle, pip.middle);
-    const ringExtended = isFingerExtended(landmarks, tip.ring, pip.ring);
-    const pinkyExtended = isFingerExtended(landmarks, tip.pinky, pip.pinky);
-
-    const isOpenPalm = indexExtended && middleExtended && ringExtended && pinkyExtended;
-    const isFist = !indexExtended && !middleExtended && !ringExtended && !pinkyExtended;
-    const isPeace = indexExtended && middleExtended && !ringExtended && !pinkyExtended;
-    const isPointing = indexExtended && !middleExtended;
-
-    // coords (normalized -> pixels)
-    const w = drawC.width;
-    const h = drawC.height;
-
-    const index = landmarks[tip.index];
-    const thumb = landmarks[tip.thumb];
-
-    // mirror view: if UI mirrored, invert x so drawing matches what user sees
-    const mx = mirrorRef.current ? (1 - index.x) : index.x;
-    const tx = mirrorRef.current ? (1 - thumb.x) : thumb.x;
-
-    const ix = mx * w;
-    const iy = index.y * h;
-
-    // fist hold -> clear
     if (isFist) {
       if (!fistStartRef.current) fistStartRef.current = Date.now();
-      const held = Date.now() - fistStartRef.current;
-
-      overlayCtx.save();
-      overlayCtx.font = "14px system-ui";
-      overlayCtx.fillStyle = "#ef4444";
-      overlayCtx.fillText(`Fist hold: ${(held / 1000).toFixed(1)}s`, 10, 20);
-      overlayCtx.restore();
-
-      if (held > 1800) {
-        clearDrawing();
-        setStatusSafe("Cleared (fist hold)");
-        fistStartRef.current = null;
-        return;
-      }
+      if (Date.now() - fistStartRef.current > 1500) clearDrawing();
     } else {
       fistStartRef.current = null;
     }
 
-    // peace -> save (cooldown)
     if (isPeace) {
-      const now = Date.now();
-      if (now - lastSaveRef.current > 2000) {
+      if (Date.now() - lastSaveRef.current > 3000) {
         saveDrawing();
-        lastSaveRef.current = now;
-        setStatusSafe("Saved (peace sign)");
+        lastSaveRef.current = Date.now();
       }
-      prevPosRef.current = null;
-      return;
     }
 
-    // open palm -> pause
-    if (isOpenPalm) {
-      prevPosRef.current = null;
-      setStatusSafe("Paused (open palm)");
-      return;
-    }
-
-    // pinch -> adjust brush size (but don't spam state)
-    const pinchDist = Math.hypot((mx - tx) * w, (index.y - thumb.y) * h);
-    const newBrush = Math.max(2, Math.min(30, Math.round(pinchDist / 10)));
-    if (Math.abs(brushRef.current - newBrush) >= 1) {
-      brushRef.current = newBrush;
-      // update UI occasionally (not every frame)
-      setBrushUI((prev) => (Math.abs(prev - newBrush) >= 2 ? newBrush : prev));
-    }
-
-    // draw when pointing
     if (isPointing) {
-      const t = toolRef.current;
-      const c = colorRef.current;
-      const b = brushRef.current;
-
       drawCtx.lineCap = "round";
-      drawCtx.lineJoin = "round";
-      drawCtx.lineWidth = b;
+      drawCtx.lineWidth = brushRef.current;
+      drawCtx.strokeStyle = colorRef.current;
+      drawCtx.globalCompositeOperation = toolRef.current === "eraser" ? "destination-out" : "source-over";
 
-      if (t === "eraser") {
-        drawCtx.globalCompositeOperation = "destination-out";
-        drawCtx.strokeStyle = "rgba(0,0,0,1)";
-      } else {
-        drawCtx.globalCompositeOperation = "source-over";
-        drawCtx.strokeStyle = c;
-      }
-
-      const prev = prevPosRef.current;
       drawCtx.beginPath();
-      if (prev) drawCtx.moveTo(prev.x, prev.y);
+      if (prevPosRef.current) drawCtx.moveTo(prevPosRef.current.x, prevPosRef.current.y);
       else drawCtx.moveTo(ix, iy);
       drawCtx.lineTo(ix, iy);
       drawCtx.stroke();
-
       prevPosRef.current = { x: ix, y: iy };
-      setStatusSafe(`Drawing — ${t === "eraser" ? "Eraser" : "Brush"} • ${b}px`);
+      setStatusText("Drawing... ✍️");
     } else {
       prevPosRef.current = null;
-      setStatusSafe("Hand detected — not drawing");
+      if (isOpen) setStatusText("Hand detected (Paused) ✋");
     }
   }
 
-  // Setup MediaPipe hands + camera
   useEffect(() => {
-    const video = videoRef.current;
-    const drawC = drawCanvasRef.current;
-    const overlayC = overlayCanvasRef.current;
-    if (!video || !drawC || !overlayC) return;
-
-    // responsive: fit container width, keep 4:3
-    const baseW = 960;
-    const baseH = 720;
-
-    video.width = baseW;
-    video.height = baseH;
-    drawC.width = baseW;
-    drawC.height = baseH;
-    overlayC.width = baseW;
-    overlayC.height = baseH;
-
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
     });
 
-    hands.setOptions({
-      maxNumHands: 1,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+    hands.onResults((res) => {
+      const lm = res.multiHandLandmarks?.[0];
+      if (lm) handleLandmarks(lm);
+      else setStatusText("Show your hand to start! ✋");
     });
 
-    hands.onResults((results) => {
-      const overlayCtx = getCtx(overlayCanvasRef);
-      if (!overlayCtx || !overlayC) return;
-
-      overlayCtx.clearRect(0, 0, overlayC.width, overlayC.height);
-
-      const lm = results.multiHandLandmarks?.[0];
-      if (lm) {
-        try {
-          handleLandmarks(lm);
-        } catch (err) {
-          console.error("handleLandmarks error:", err);
-          setStatusSafe("Gesture error (check console)");
-        }
-      } else {
-        prevPosRef.current = null;
-        setStatusSafe("No hand detected", 250);
-      }
+    const camera = new Camera(videoRef.current, {
+      onFrame: async () => { await hands.send({ image: videoRef.current }); },
+      width: 960, height: 720
     });
+    camera.start();
 
-    const camera = new Camera(video, {
-      onFrame: async () => {
-        await hands.send({ image: video });
-      },
-      width: baseW,
-      height: baseH,
-    });
+    // Set canvas sizes
+    drawCanvasRef.current.width = 960;
+    drawCanvasRef.current.height = 720;
+    overlayCanvasRef.current.width = 960;
+    overlayCanvasRef.current.height = 720;
 
-    camera.start().catch((err) => {
-      console.error("Camera start failed:", err);
-      setStatusSafe("Camera start failed");
-    });
-
-    cameraRef.current = camera;
-    handsRef.current = hands;
-
-    return () => {
-      try { camera.stop(); } catch {}
-      try { hands.close(); } catch {}
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { camera.stop(); hands.close(); };
   }, []);
 
-  const currentColor = useMemo(() => colorUI, [colorUI]);
-
   return (
-    <div className="gc-wrap">
-      {/* TOP TOOLBAR (Paint-like) */}
-      <div className="gc-topbar">
-        <div className="gc-brand">SmartCanvas</div>
-
-        <button className={`gc-btn ${tool === "brush" ? "isActive" : ""}`} onClick={() => setTool("brush")}>
-          <Icon>{Icons.brush}</Icon> Brush
-        </button>
-
-        <button className={`gc-btn ${tool === "eraser" ? "isActive" : ""}`} onClick={() => setTool("eraser")}>
-          <Icon>{Icons.eraser}</Icon> Eraser
-        </button>
-
-        <div className="gc-sep" />
-
-        <label className="gc-color">
-          <span className="gc-label">Color</span>
-          <input
-            type="color"
-            value={currentColor}
-            onChange={(e) => setColorUI(e.target.value)}
-            aria-label="Color picker"
-          />
-        </label>
-
-        <label className="gc-size">
-          <span className="gc-label">Size</span>
-          <input
-            type="range"
-            min="2"
-            max="30"
-            value={brushUI}
-            onChange={(e) => setBrushUI(+e.target.value)}
-            aria-label="Brush size"
-          />
-          <span className="gc-sizeval">{brushUI}px</span>
-        </label>
-
-        <div className="gc-sep" />
-
-        <button className="gc-btn" onClick={() => setMirrorView((v) => !v)}>
-          <Icon>{Icons.mirror}</Icon> {mirrorView ? "Mirror On" : "Mirror Off"}
-        </button>
-
-        <div className="gc-spacer" />
-
-        <button className="gc-btn" onClick={saveDrawing}>
-          <Icon>{Icons.save}</Icon> Save
-        </button>
-        <button className="gc-btn danger" onClick={clearDrawing}>
-          <Icon>{Icons.trash}</Icon> Clear
-        </button>
-      </div>
-
-      {/* CANVAS AREA */}
-      <div className="gc-stage">
-        {/* hidden video for MediaPipe */}
-        <video ref={videoRef} className="gc-video" autoPlay playsInline muted />
-
-        <div className={`gc-canvasBox ${mirrorView ? "mirrored" : ""}`}>
-          <canvas ref={drawCanvasRef} className="gc-canvas draw" />
-          <canvas ref={overlayCanvasRef} className="gc-canvas overlay" />
+    <div className="gc-page">
+      <div className="gc-card">
+        {/* Top Header */}
+        <div className="gc-header">
+          <Link to="/dashboard" className="gc-back">← Back</Link>
+          <div className="gc-ribbon-small">Air Drawing</div>
+          <div className="gc-status-pill">{statusText}</div>
         </div>
 
-        {/* STATUS + HELP */}
-        <div className="gc-status">
-          <div className="gc-pill">
-            <b>Status:</b> {statusText}
+        {/* The Artist Canvas Stage */}
+        <div className="gc-stage-container">
+          <video ref={videoRef} className="gc-video-hidden" />
+          <canvas ref={drawCanvasRef} className="gc-main-canvas" />
+          <canvas ref={overlayCanvasRef} className="gc-overlay-canvas" />
+        </div>
+
+        {/* Hand-Drawn Toolbar */}
+        <div className="gc-toolbar">
+          <div className="gc-tools-group">
+            <button className={`gc-tool-btn ${tool === 'brush' ? 'active' : ''}`} onClick={() => setTool("brush")}>🖌️ Brush</button>
+            <button className={`gc-tool-btn ${tool === 'eraser' ? 'active' : ''}`} onClick={() => setTool("eraser")}>🧽 Eraser</button>
           </div>
 
-          <div className="gc-help">
-            <b>Gestures:</b> Point = draw • Open palm = pause • ✌️ = save • Fist hold (1.8s) = clear
+          <div className="gc-tools-group">
+            <input type="color" className="gc-color-picker" value={colorUI} onChange={(e) => setColorUI(e.target.value)} />
+            <input type="range" min="2" max="40" value={brushUI} onChange={(e) => setBrushUI(e.target.value)} />
+            <span className="gc-size-text">{brushUI}px</span>
+          </div>
+
+          <div className="gc-tools-group">
+            <button className="gc-action-btn save" onClick={saveDrawing}>SAVE</button>
+            <button className="gc-action-btn clear" onClick={clearDrawing}>CLEAR</button>
           </div>
         </div>
       </div>

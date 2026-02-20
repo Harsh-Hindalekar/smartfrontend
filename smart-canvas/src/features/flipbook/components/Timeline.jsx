@@ -35,17 +35,20 @@ export default function Timeline({ frames, activeIndex, setActiveIndex, setFrame
   };
 
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-      <button onClick={addFrame}>+ Frame</button>
-      <button onClick={duplicateFrame}>Duplicate</button>
-      <button onClick={deleteFrame} disabled={frames.length <= 1}>Delete</button>
+    <div className="fb-timeline">
+      <div className="fb-tools">
+        <button className="fb-tool-btn" onClick={addFrame}>+ Frame</button>
+        <button className="fb-tool-btn" onClick={duplicateFrame}>Duplicate</button>
+        <button className="fb-tool-btn" onClick={deleteFrame} disabled={frames.length <= 1}>Delete</button>
+      </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {frames.map((f, idx) => (
           <button
             key={f.id}
             onClick={() => { setPlaying(false); setSelectedId(null); setActiveIndex(idx); }}
-            style={{ border: idx===activeIndex ? "2px solid black" : "1px solid #999", padding: 4, width: 72, background:"white" }}
+            className="fb-frame-btn"
+            style={{ border: idx===activeIndex ? "2px solid black" : "1px solid #999" }}
             title={`Frame ${idx + 1}`}
           >
             <div style={{ fontSize: 12, marginBottom: 4 }}>#{idx + 1}</div>

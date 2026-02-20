@@ -1,6 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
 import { detectIntent } from "./intentAI";
 import { makeShape } from "./shapeFactory";
+import "./AiDrawing.css";
+import TopBar from "./components/TopBar";
+import LeftTools from "./components/LeftTools";
+import RightPanel from "./components/RightPanel";
+import CanvasArea from "./components/CanvasArea";
 
 export default function AiDrawing() {
   const canvasRef = useRef(null);
@@ -38,10 +43,18 @@ export default function AiDrawing() {
   /* ---------------- SETUP ---------------- */
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = CANVAS_W;
-    canvas.height = CANVAS_H;
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    // set internal pixel size for high-DPI, keep CSS size equal to logical canvas size
+    canvas.width = Math.round(CANVAS_W * dpr);
+    canvas.height = Math.round(CANVAS_H * dpr);
+    canvas.style.width = `${CANVAS_W}px`;
+    canvas.style.height = `${CANVAS_H}px`;
 
     const ctx = canvas.getContext("2d");
+    // map drawing coordinates to CSS pixels (so handlers use CSS coords)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxRef.current = ctx;
     redraw(elementsRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,8 +62,19 @@ export default function AiDrawing() {
 
   /* ---------------- UTIL ---------------- */
   const getPos = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    // CSS coords inside element
+    const cx = clientX - rect.left;
+    const cy = clientY - rect.top;
+
+    // Map CSS pixels -> canvas internal pixels (accounts for DPR / CSS scaling)
+    const scaleX = canvas.width / rect.width || 1;
+    const scaleY = canvas.height / rect.height || 1;
+    return { x: cx * scaleX, y: cy * scaleY };
   };
 
   const getBounds = (pts) => {
@@ -726,214 +750,47 @@ export default function AiDrawing() {
     ? "text"
     : "default";
 
-  /* ---------------- UI (simple paint-like) ---------------- */
+  /* ---------------- UI (split into components) ---------------- */
   return (
-    <div style={{ padding: 10, userSelect: "none" }}>
-      {/* Top bar */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          padding: "8px 10px",
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          marginBottom: 10,
-          background: "#f8fafc",
-        }}
-      >
-        <b style={{ marginRight: 10 }}>SmartCanvas</b>
+    <div className="ai-page">
+      <TopBar
+        undo={undo}
+        redo={redo}
+        aiMode={aiMode}
+        setAiMode={setAiMode}
+        bringFront={bringFront}
+        sendBack={sendBack}
+        deleteSelected={deleteSelected}
+        onImportImage={onImportImage}
+        savePNG={savePNG}
+        onClear={() => { if (textEditor) commitTextEditor(); commit([]); setSelectedId(null); }}
+      />
 
-        <button onClick={undo}>Undo</button>
-        <button onClick={redo}>Redo</button>
+      <div className="ai-workspace">
+        <LeftTools tool={tool} setTool={setTool} />
 
-        <div style={{ width: 1, height: 22, background: "#ddd" }} />
-
-        <button onClick={() => setAiMode((v) => !v)}>AI {aiMode ? "ON" : "OFF"}</button>
-
-        <div style={{ width: 1, height: 22, background: "#ddd" }} />
-
-        <button onClick={bringFront} disabled={!selectedId}>
-          Bring Front
-        </button>
-        <button onClick={sendBack} disabled={!selectedId}>
-          Send Back
-        </button>
-        <button onClick={deleteSelected} disabled={!selectedId}>
-          Delete
-        </button>
-
-        <div style={{ flex: 1 }} />
-
-        <label style={{ border: "1px solid #999", padding: "4px 8px", cursor: "pointer", borderRadius: 6 }}>
-          Import Image
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={(e) => onImportImage(e.target.files?.[0])}
-          />
-        </label>
-
-        <button onClick={savePNG}>Save PNG</button>
-        <button
-          onClick={() => {
-            if (textEditor) commitTextEditor();
-            commit([]);
-            setSelectedId(null);
+        <CanvasArea
+          canvasRef={canvasRef}
+          cursor={cursor}
+          onDown={onDown}
+          onMove={onMove}
+          onUp={onUp}
+          onClick={(e) => {
+            if (drawing || actionRef.current || tool === "text") return;
+            const p = getPos(e);
+            selectAt(p.x, p.y);
           }}
-        >
-          Clear
-        </button>
-      </div>
-
-      {/* Main area */}
-      <div style={{ display: "flex", gap: 10 }}>
-        {/* Left tool rail */}
-        <div
-          style={{
-            width: 120,
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            background: "#fff",
-            padding: 8,
-            height: CANVAS_H + 2,
+          onDoubleClick={(e) => {
+            const p = getPos(e);
+            const hit = hitTest(p.x, p.y);
+            if (hit && hit.type === "text") openTextEditorFor(hit);
           }}
-        >
-          <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>Tools</div>
+          textEditor={textEditor}
+          commitTextEditor={commitTextEditor}
+          setTextEditor={setTextEditor}
+        />
 
-          {[
-            ["pencil", "Pencil"],
-            ["marker", "Marker"],
-            ["highlighter", "Highlighter"],
-            ["brush", "Brush"],
-            ["eraser", "Eraser"],
-            ["text", "Text"],
-          ].map(([k, label]) => (
-            <button
-              key={k}
-              onClick={() => setTool(k)}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                padding: "8px 10px",
-                marginBottom: 6,
-                borderRadius: 8,
-                border: "1px solid #e5e7eb",
-                background: tool === k ? "#e0f2fe" : "#fff",
-                cursor: "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-
-          <div style={{ marginTop: 10, fontSize: 12, color: "#555" }}>Tip</div>
-          <div style={{ fontSize: 12, color: "#777", marginTop: 4, lineHeight: 1.35 }}>
-            Click object to select.
-            <br />
-            Drag to move.
-            <br />
-            Square = resize.
-            <br />
-            Circle = rotate.
-          </div>
-        </div>
-
-        {/* Canvas + overlay */}
-        <div style={{ position: "relative" }}>
-          <canvas
-            ref={canvasRef}
-            style={{ border: "2px solid black", cursor, background: "#fff" }}
-            onMouseDown={onDown}
-            onMouseMove={onMove}
-            onMouseUp={onUp}
-            onMouseLeave={onUp}
-            onClick={(e) => {
-              // select by click (not when drawing/dragging)
-              if (drawing || actionRef.current || tool === "text") return;
-              const p = getPos(e);
-              selectAt(p.x, p.y);
-            }}
-            onDoubleClick={(e) => {
-              const p = getPos(e);
-              const hit = hitTest(p.x, p.y);
-              if (hit && hit.type === "text") {
-                openTextEditorFor(hit);
-              }
-            }}
-          />
-
-          {/* Canva-like text editor overlay */}
-          {textEditor && (
-            <textarea
-              autoFocus
-              value={textEditor.value}
-              onChange={(e) => setTextEditor((t) => ({ ...t, value: e.target.value }))}
-              onBlur={commitTextEditor}
-              style={{
-                position: "absolute",
-                left: textEditor.x,
-                top: textEditor.y - (textEditor.fontSize || 28),
-                minWidth: 180,
-                minHeight: 50,
-                padding: 6,
-                resize: "both",
-                border: "2px solid #2563eb",
-                outline: "none",
-                fontSize: textEditor.fontSize || 28,
-                fontFamily: textEditor.fontFamily || "Arial",
-                color: textEditor.color || "#000",
-                background: "rgba(255,255,255,0.95)",
-              }}
-              placeholder="Type here..."
-            />
-          )}
-        </div>
-
-        {/* Right panel */}
-        <div
-          style={{
-            width: 220,
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            background: "#fff",
-            padding: 10,
-            height: CANVAS_H + 2,
-          }}
-        >
-          <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>Settings</div>
-
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 12, marginBottom: 6 }}>Color</div>
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-          </div>
-
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 12, marginBottom: 6 }}>Size</div>
-            <input type="range" min="1" max="30" value={size} onChange={(e) => setSize(+e.target.value)} />
-            <div style={{ fontSize: 12, color: "#666" }}>{size}px</div>
-          </div>
-
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 12, marginBottom: 6 }}>AI Mode</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.35 }}>
-              AI affects <b>shapes</b> when drawing with pen tools.
-              <br />
-              Eraser/Text are not AI.
-            </div>
-          </div>
-
-          <div style={{ fontSize: 12, color: "#666", marginTop: 12 }}>
-            Shortcuts:
-            <br />
-            Ctrl+Z / Ctrl+Y
-            <br />
-            Delete to remove
-            <br />
-            Enter to finish text
-          </div>
-        </div>
+        <RightPanel color={color} setColor={setColor} size={size} setSize={setSize} />
       </div>
     </div>
   );

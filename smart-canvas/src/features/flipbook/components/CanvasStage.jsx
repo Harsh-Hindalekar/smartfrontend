@@ -165,7 +165,7 @@ export default function CanvasStage({
   });
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 10, overflow: "hidden", width: CSS_W }}>
+    <div className="fb-stage-inner" style={{ width: "100%", height: "100%" }}>
       {/* Visible stage */}
       <canvas
         ref={stageRef}
@@ -173,6 +173,7 @@ export default function CanvasStage({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
+        className="fb-canvas"
         style={{ background: "white", touchAction: "none", display: "block" }}
       />
 
