@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { useDprCanvas } from "../flipbook/hooks/useDprCanvas";
 import { detectIntent } from "./intentAI";
 import { makeShape } from "./shapeFactory";
 import "./AiDrawing.css";
@@ -41,24 +42,16 @@ export default function AiDrawing() {
   const CANVAS_H = 600;
 
   /* ---------------- SETUP ---------------- */
+  // use shared DPR helper (same approach as flipbook) so CSS size and backing store match
+  useDprCanvas(canvasRef, CANVAS_W, CANVAS_H);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    // set internal pixel size for high-DPI, keep CSS size equal to logical canvas size
-    canvas.width = Math.round(CANVAS_W * dpr);
-    canvas.height = Math.round(CANVAS_H * dpr);
-    canvas.style.width = `${CANVAS_W}px`;
-    canvas.style.height = `${CANVAS_H}px`;
-
     const ctx = canvas.getContext("2d");
-    // map drawing coordinates to CSS pixels (so handlers use CSS coords)
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxRef.current = ctx;
-    redraw(elementsRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    redraw(elementsRef.current || []);
+  }, [canvasRef]);
 
   /* ---------------- UTIL ---------------- */
   const getPos = (e) => {
@@ -390,6 +383,11 @@ export default function AiDrawing() {
 
   /* ---------------- MOUSE EVENTS ---------------- */
   const onDown = (e) => {
+    // capture pointer so moves outside canvas still route here
+    const canvas = canvasRef.current;
+    if (canvas && e?.pointerId !== undefined) {
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    }
     // if text editor open, finish it first
     if (textEditor) commitTextEditor();
 
@@ -485,94 +483,91 @@ export default function AiDrawing() {
       const act = actionRef.current;
       const id = act.id;
 
-      // IMPORTANT FIX: keep ref synced during drag so commit gets latest
-      setElements((prev) => {
-        const next = prev.map((el) => {
-          if (el.id !== id) return el;
+      // Update elementsRef directly and redraw immediately for smooth dragging
+      const prev = elementsRef.current || [];
+      const next = prev.map((el) => {
+        if (el.id !== id) return el;
 
-          // MOVE
-          if (act.kind === "move") {
-            const dx = p.x - act.lastPointer.x;
-            const dy = p.y - act.lastPointer.y;
-            act.lastPointer = p;
+        // MOVE
+        if (act.kind === "move") {
+          const dx = p.x - act.lastPointer.x;
+          const dy = p.y - act.lastPointer.y;
+          act.lastPointer = p;
 
-            if (el.type === "image") {
-              return { ...el, cx: el.cx + dx, cy: el.cy + dy };
-            }
-            if (el.type === "text") {
-              const nx = el.x + dx;
-              const ny = el.y + dy;
-              const b = ctxRef.current ? measureTextBounds(ctxRef.current, el.text, nx, ny, el.fontSize || 28, el.fontFamily || "Arial") : el.bounds;
-              return { ...el, x: nx, y: ny, bounds: b };
-            }
-
-            const moved = el.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy }));
-            return { ...el, points: moved, bounds: getBounds(moved) };
+          if (el.type === "image") {
+            return { ...el, cx: el.cx + dx, cy: el.cy + dy };
+          }
+          if (el.type === "text") {
+            const nx = el.x + dx;
+            const ny = el.y + dy;
+            const b = ctxRef.current ? measureTextBounds(ctxRef.current, el.text, nx, ny, el.fontSize || 28, el.fontFamily || "Arial") : el.bounds;
+            return { ...el, x: nx, y: ny, bounds: b };
           }
 
-          // RESIZE
-          if (act.kind === "resize") {
-            const bb = act.baseBounds;
-            const safeW = Math.max(bb.w, 1);
-            const safeH = Math.max(bb.h, 1);
+          const moved = el.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy }));
+          return { ...el, points: moved, bounds: getBounds(moved) };
+        }
 
-            const scaleX = (p.x - bb.minX) / safeW;
-            const scaleY = (p.y - bb.minY) / safeH;
+        // RESIZE
+        if (act.kind === "resize") {
+          const bb = act.baseBounds;
+          const safeW = Math.max(bb.w, 1);
+          const safeH = Math.max(bb.h, 1);
 
-            const sx = Math.max(0.08, Math.min(scaleX, 12));
-            const sy = Math.max(0.08, Math.min(scaleY, 12));
+          const scaleX = (p.x - bb.minX) / safeW;
+          const scaleY = (p.y - bb.minY) / safeH;
 
-            if (el.type === "image") {
-              const base = act.originalImage;
-              return { ...el, w: Math.max(20, base.w * sx), h: Math.max(20, base.h * sy) };
-            }
+          const sx = Math.max(0.08, Math.min(scaleX, 12));
+          const sy = Math.max(0.08, Math.min(scaleY, 12));
 
-            if (el.type === "text") {
-              // Canva-like: resizing text box changes font size a bit (simple)
-              const base = act.originalText;
-              const newFont = Math.max(10, Math.min(120, Math.round((base.fontSize || 28) * ((sx + sy) / 2))));
-              const b = measureTextBounds(ctxRef.current, el.text, base.x, base.y, newFont, base.fontFamily || "Arial");
-              return { ...el, fontSize: newFont, bounds: b };
-            }
-
-            const orig = act.originalPoints;
-            const scaled = orig.map((pt) => ({
-              x: bb.minX + (pt.x - bb.minX) * sx,
-              y: bb.minY + (pt.y - bb.minY) * sy,
-            }));
-            return { ...el, points: scaled, bounds: getBounds(scaled) };
+          if (el.type === "image") {
+            const base = act.originalImage;
+            return { ...el, w: Math.max(20, base.w * sx), h: Math.max(20, base.h * sy) };
           }
 
-          // ROTATE
-          if (act.kind === "rotate") {
-            const cx = act.cx;
-            const cy = act.cy;
-
-            const now = Math.atan2(p.y - cy, p.x - cx);
-            const delta = now - act.startAngle;
-
-            if (el.type === "image") {
-              const base = act.originalImage;
-              return { ...el, angle: (base.angle || 0) + delta };
-            }
-
-            if (el.type === "text") {
-              // text rotation (store angle, redraw would need rotate; keep simple: just store angle for later)
-              // If you want actual rotated text rendering, tell me; I’ll add it.
-              return { ...el, angle: (el.angle || 0) + delta };
-            }
-
-            const orig = act.originalPoints;
-            const rotated = orig.map((pt) => rotatePoint(pt.x, pt.y, cx, cy, delta));
-            return { ...el, points: rotated, bounds: getBounds(rotated) };
+          if (el.type === "text") {
+            const base = act.originalText;
+            const newFont = Math.max(10, Math.min(120, Math.round((base.fontSize || 28) * ((sx + sy) / 2))));
+            const b = measureTextBounds(ctxRef.current, el.text, base.x, base.y, newFont, base.fontFamily || "Arial");
+            return { ...el, fontSize: newFont, bounds: b };
           }
 
-          return el;
-        });
+          const orig = act.originalPoints;
+          const scaled = orig.map((pt) => ({
+            x: bb.minX + (pt.x - bb.minX) * sx,
+            y: bb.minY + (pt.y - bb.minY) * sy,
+          }));
+          return { ...el, points: scaled, bounds: getBounds(scaled) };
+        }
 
-        elementsRef.current = next;
-        return next;
+        // ROTATE
+        if (act.kind === "rotate") {
+          const cx = act.cx;
+          const cy = act.cy;
+
+          const now = Math.atan2(p.y - cy, p.x - cx);
+          const delta = now - act.startAngle;
+
+          if (el.type === "image") {
+            const base = act.originalImage;
+            return { ...el, angle: (base.angle || 0) + delta };
+          }
+
+          if (el.type === "text") {
+            return { ...el, angle: (el.angle || 0) + delta };
+          }
+
+          const orig = act.originalPoints;
+          const rotated = orig.map((pt) => rotatePoint(pt.x, pt.y, cx, cy, delta));
+          return { ...el, points: rotated, bounds: getBounds(rotated) };
+        }
+
+        return el;
       });
+
+      // sync ref and immediate redraw for responsive UX
+      elementsRef.current = next;
+      try { redraw(next); } catch (err) { /* swallow during fast moves */ }
 
       return;
     }
@@ -598,7 +593,13 @@ export default function AiDrawing() {
     setPoints((prev) => [...prev, p]);
   };
 
-  const onUp = () => {
+  const onUp = (e) => {
+    // release pointer capture
+    const canvas = canvasRef.current;
+    if (canvas && e?.pointerId !== undefined) {
+      try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    }
+
     // Finish transform => commit history
     if (actionRef.current) {
       const snap = actionRef.current.snapshot;

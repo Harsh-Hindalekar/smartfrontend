@@ -6,11 +6,11 @@ export default function CanvasArea({ canvasRef, cursor, onDown, onMove, onUp, on
       <canvas
         ref={canvasRef}
         className="main-canvas"
-        style={{ cursor }}
-        onMouseDown={onDown}
-        onMouseMove={onMove}
-        onMouseUp={onUp}
-        onMouseLeave={onUp}
+        style={{ cursor, touchAction: 'none' }}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerLeave={onUp}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
       />
