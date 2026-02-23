@@ -60,10 +60,16 @@ export default function AiDrawing() {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    // CSS coords inside element — canvas context is transformed for DPR so use CSS pixels
-    const cx = clientX - rect.left;
-    const cy = clientY - rect.top;
-    return { x: cx, y: cy };
+    // Map event coordinates to the canvas' CSS coordinate space. This accounts
+    // for device-pixel-ratio backing store and any responsive scaling of the
+    // displayed canvas (rect.width/rect.height).
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.width / dpr;
+    const cssH = canvas.height / dpr;
+
+    const x = (clientX - rect.left) * (cssW / rect.width);
+    const y = (clientY - rect.top) * (cssH / rect.height);
+    return { x, y };
   };
 
   const getBounds = (pts) => {

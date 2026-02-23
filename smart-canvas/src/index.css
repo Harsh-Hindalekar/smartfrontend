@@ -30,9 +30,17 @@
   line-height: 1.5;
   font-weight: 400;
 
+  /* Theme variables (default to light) */
+  --bg: #ffffff;
+  --text: #213547;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --button-bg: #f9f9f9;
+  --accent: #357fe0;
+
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--text);
+  background-color: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -55,6 +63,8 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
 }
 
 h1 {
@@ -69,7 +79,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-bg);
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -83,8 +93,10 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    --bg: #ffffff;
+    --text: #213547;
+    --card: #ffffff;
+    --button-bg: #f9f9f9;
   }
   a:hover {
     color: #747bff;
@@ -92,4 +104,14 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Dark theme overrides when `dark` class is applied to <html> */
+.dark {
+  --bg: #0f1720;
+  --text: rgba(255,255,255,0.92);
+  --card: #111216;
+  --muted: #9ca3af;
+  --button-bg: #1a1a1a;
+  --accent: #3b82f6;
 }

@@ -27,11 +27,16 @@ export function useCanvasDraw({
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-      // IMPORTANT: ctx is DPR-scaled already, so we use CSS pixels here
-      return {
-        x: clientX - rect.left,
-        y: clientY - rect.top,
-      };
+      // Map displayed CSS pixels into the canvas' internal CSS coordinate space.
+      // This accounts for responsive scaling where rect.width may differ from the
+      // logical CSS width used when the canvas backing store was created.
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = inputCanvas.width / dpr;
+      const cssHeight = inputCanvas.height / dpr;
+      const x = (clientX - rect.left) * (cssWidth / rect.width);
+      const y = (clientY - rect.top) * (cssHeight / rect.height);
+
+      return { x, y };
     };
 
     const down = (e) => {

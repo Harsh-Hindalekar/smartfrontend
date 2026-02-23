@@ -12,8 +12,9 @@ html, body, #root {
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, #67b3f0, #49a6e9);
+  background: linear-gradient(135deg, rgba(0,0,0,0.03), rgba(0,0,0,0.02));
   font-family: 'Poppins', sans-serif;
+  color: var(--text);
 }
 
 /* ===== AUTH CARD ===== */
@@ -27,7 +28,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 2px solid #333; /* Hand-drawn border effect */
+  border: 2px solid var(--text);
   text-align: center;
 }
 
@@ -42,7 +43,7 @@ html, body, #root {
 .auth-logo {
   width: 80px;
   height: 80px;
-  background: #f7ce46;
+  background: var(--accent);
   border-radius: 50%;
   margin-bottom: 0.8rem;
   border: 2px solid #333;
@@ -65,7 +66,7 @@ html, body, #root {
 }
 
 .auth-title-login {
-  color: #ff80ff; /* Pink from your image */
+  color: var(--text);
   font-size: 1.1rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -88,7 +89,7 @@ html, body, #root {
 
 .auth-field label {
   font-size: 0.9rem;
-  color: #000;
+  color: var(--text);
   margin-bottom: 0.4rem;
   font-weight: 800;
 }
@@ -97,10 +98,12 @@ html, body, #root {
   width: 100%;
   padding: 0.7rem 1rem;
   border-radius: 12px;
-  border: 2px solid #333;
+  border: 2px solid var(--text);
   outline: none;
   font-size: 1rem;
   box-sizing: border-box;
+  background: transparent;
+  color: var(--text);
 }
 
 .auth-input.error {
@@ -117,7 +120,7 @@ html, body, #root {
 
 /* ===== LOGIN BUTTON (GREEN) ===== */
 .auth-btn-login {
-  background: #24b47e; /* Green from your image */
+  background: var(--accent);
   color: #000;
   border: 2px solid #333;
   padding: 0.6rem 2.5rem;
@@ -145,9 +148,8 @@ html, body, #root {
   font-size: 0.95rem;
   font-weight: 800;
 }
-
 .auth-link {
-  color: #000;
+  color: var(--text);
   text-decoration: underline;
 }
 

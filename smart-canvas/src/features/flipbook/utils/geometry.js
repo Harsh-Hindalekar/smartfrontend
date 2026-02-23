@@ -6,7 +6,16 @@ export function clamp(n, a, b) {
 
 export function getCssPos(e, canvas) {
   const rect = canvas.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.width / dpr;
+  const cssHeight = canvas.height / dpr;
+
+  return {
+    x: (clientX - rect.left) * (cssWidth / rect.width),
+    y: (clientY - rect.top) * (cssHeight / rect.height),
+  };
 }
 
 export function pointInRect(px, py, r) {

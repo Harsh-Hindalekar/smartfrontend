@@ -13,23 +13,24 @@ html, body, #root {
   align-items: center;
   min-height: 100vh;
   width: 100vw;
-  background: #49a6e9; /* The blue background from your sketch */
+  background: linear-gradient(135deg, rgba(0,0,0,0.03), rgba(0,0,0,0.02));
   font-family: 'Poppins', sans-serif;
   margin: 0;
+  color: var(--text);
 }
 
 /* ===== HAND-DRAWN CARD CONTAINER ===== */
 .auth-card {
-  background-color: #b3e0ff; /* Light blue card color from sketch */
+  background-color: var(--card);
   width: 100%;
   max-width: 420px;
   padding: 2rem;
   border-radius: 25px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 2px solid #333; /* Thick black hand-drawn border */
+  border: 2px solid var(--text);
   text-align: center;
 }
 
@@ -44,10 +45,10 @@ html, body, #root {
 .auth-logo {
   width: 90px;
   height: 90px;
-  background: #f7ce46; /* Yellow circle logo */
+  background: var(--accent);
   border-radius: 50%;
   margin-bottom: 0.5rem;
-  border: 2px solid #333;
+  border: 2px solid var(--text);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -67,7 +68,7 @@ html, body, #root {
 }
 
 .auth-title-login {
-  color: #ff80ff; /* Pink title color from sketch */
+  color: var(--text);
   font-size: 1.1rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -90,7 +91,7 @@ html, body, #root {
 
 .auth-field label {
   font-size: 0.85rem;
-  color: #000;
+  color: var(--text);
   margin-bottom: 0.2rem;
   font-weight: 800;
 }
@@ -99,10 +100,11 @@ html, body, #root {
   width: 100%;
   padding: 0.6rem 1rem;
   border-radius: 12px;
-  border: 2px solid #333; /* Thick border for inputs */
-  background: #fff;
+  border: 2px solid var(--text);
+  background: transparent;
   font-size: 0.95rem;
   box-sizing: border-box;
+  color: var(--text);
 }
 
 /* Error state for inputs */
@@ -134,9 +136,9 @@ html, body, #root {
 
 /* ===== BUTTONS ===== */
 .auth-btn-sketch {
-  background: #ffffff; /* White button as seen in register sketch */
-  color: #000;
-  border: 2px solid #333;
+  background: var(--button-bg);
+  color: var(--text);
+  border: 2px solid var(--text);
   padding: 0.5rem 2rem;
   border-radius: 10px;
   font-size: 1rem;
@@ -163,7 +165,7 @@ html, body, #root {
 }
 
 .auth-link {
-  color: #357fe0; /* Blue link */
+  color: var(--accent);
   font-weight: 800;
   text-decoration: underline;
   text-transform: uppercase;

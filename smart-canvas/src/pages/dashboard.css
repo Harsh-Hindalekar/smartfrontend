@@ -4,21 +4,22 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #49a6e9; /* Same blue background as your login/register */
+  background: var(--bg);
   padding: 20px;
   font-family: 'Comic Sans MS', 'Poppins', cursive, sans-serif;
+  color: var(--text);
 }
 
 /* The Main "Canvas" Card */
 .dbShell {
   width: 100%;
   max-width: 1000px;
-  background-color: #b3e0ff; /* Light blue card */
-  border: 3px solid #333; /* Hand-drawn thick border */
+  background-color: var(--card);
+  border: 3px solid var(--text);
   border-radius: 40px;
   padding: 60px 40px;
   position: relative;
-  box-shadow: 12px 12px 0px rgba(0,0,0,0.1);
+  box-shadow: 12px 12px 0px rgba(0,0,0,0.06);
 }
 
 /* Setting Icon (Top Left) */
@@ -45,7 +46,7 @@
 .dbTopIcon img { width: 30px; height: 30px; }
 
 .dbTopText {
-  color: #333;
+  color: var(--text);
   font-weight: bold;
   font-size: 0.9rem;
   margin-top: 4px;
@@ -59,15 +60,15 @@
 }
 
 .dbRibbon {
-  background: #f7ce46; /* Vibrant yellow */
-  border: 3px solid #333;
+  background: var(--accent);
+  border: 3px solid var(--text);
   border-radius: 15px;
   padding: 10px 100px;
   font-size: 2rem;
   font-weight: 900;
-  color: #357fe0;
-  box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
-  transform: rotate(-1deg); /* Slight tilt for that sketchy look */
+  color: var(--card);
+  box-shadow: 6px 6px 0px rgba(89, 163, 224, 0.06);
+  transform: rotate(-1deg);
 }
 
 /* Tiles Grid */
@@ -79,7 +80,7 @@
 
 .dbTile {
   height: 250px;
-  border: 3px solid #333;
+  border: 3px solid var(--text);
   border-radius: 30px;
   text-decoration: none;
   display: flex;
@@ -95,9 +96,9 @@
 }
 
 /* Specific Tile Colors */
-.tAir { background-color: #a7f3d0; }   /* Mint Green from sketch */
-.tSmart { background-color: #ffedd5; } /* Peach from sketch */
-.tFlip { background-color: #fecaca; }  /* Pink from sketch */
+.tAir { background-color: var(--tile1, #a7f3d0); }
+.tSmart { background-color: var(--tile2, #ffedd5); }
+.tFlip { background-color: var(--tile3, #fecaca); }
 
 .dbTileImg img {
   max-width: 140px;
@@ -109,7 +110,7 @@
   margin-top: 15px;
   font-size: 1.4rem;
   font-weight: 800;
-  color: #333;
+  color: var(--text);
   text-transform: capitalize;
 }
 
@@ -118,8 +119,8 @@
   position: absolute;
   right: 25px;
   bottom: 20px;
-  background: #333;
-  color: white;
+  background: var(--text);
+  color: var(--card);
   border: none;
   padding: 8px 16px;
   border-radius: 10px;
