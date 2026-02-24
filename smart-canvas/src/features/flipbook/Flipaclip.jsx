@@ -46,9 +46,10 @@ export default function Flipaclip() {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      padding: "20px",
+      padding: "12px",
       background: "#f1f5f9",
-      boxSizing: "border-box"
+      boxSizing: "border-box",
+      color: "#1e293b"
     }}>
       <div style={{ width: "100%", maxWidth: "1200px", display: "grid", gap: 12 }}>
         <h2 style={{ margin: 0 }}>Smart-Canvas • Flipaclip Mode</h2>

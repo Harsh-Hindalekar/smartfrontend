@@ -10,8 +10,8 @@ import {
   saveRasterAndThumb,
 } from "../utils/thumbs";
 
-const CSS_W = 900;
-const CSS_H = 520;
+const CSS_W = 800;
+const CSS_H = 480;
 
 export default function CanvasStage({
   stageRef,          // visible canvas
@@ -86,48 +86,48 @@ export default function CanvasStage({
     size,
     tool: brushTool,
     enabled: !playing && toolMode === "draw",
-    
+
     onStrokeStart: () => {
-        pushUndo(setFrames, activeIndex);
+      pushUndo(setFrames, activeIndex);
     },
 
-  // ✅ so you SEE drawing live (stage updates while drawing)
+    // ✅ so you SEE drawing live (stage updates while drawing)
     onStrokeMove: () => {
-        const liveRaster = getRasterImageData(rasterRef, CSS_W, CSS_H);
-        drawStageAll(
-            stageRef,
-            imgCacheRef,
-            prevFrame,
-            { ...activeFrame, raster: liveRaster },
-            onionSkin,
-            onionOpacity,
-            selectedId,
-            toolMode,
-            cutBox,
-            CSS_W,
-            CSS_H
-        );
+      const liveRaster = getRasterImageData(rasterRef, CSS_W, CSS_H);
+      drawStageAll(
+        stageRef,
+        imgCacheRef,
+        prevFrame,
+        { ...activeFrame, raster: liveRaster },
+        onionSkin,
+        onionOpacity,
+        selectedId,
+        toolMode,
+        cutBox,
+        CSS_W,
+        CSS_H
+      );
     },
 
     onStrokeEnd: () => {
-        const raster = getRasterImageData(rasterRef, CSS_W, CSS_H);
-        saveRasterAndThumb(setFrames, activeIndex, raster);
+      const raster = getRasterImageData(rasterRef, CSS_W, CSS_H);
+      saveRasterAndThumb(setFrames, activeIndex, raster);
 
-        drawStageAll(
-            stageRef,
-            imgCacheRef,
-            prevFrame,
-            { ...activeFrame, raster },
-            onionSkin,
-            onionOpacity,
-            selectedId,
-            toolMode,
-            cutBox,
-            CSS_W,
-            CSS_H
-        );
+      drawStageAll(
+        stageRef,
+        imgCacheRef,
+        prevFrame,
+        { ...activeFrame, raster },
+        onionSkin,
+        onionOpacity,
+        selectedId,
+        toolMode,
+        cutBox,
+        CSS_W,
+        CSS_H
+      );
     },
-});
+  });
 
 
   // ✅ Select/Move/Resize/Cut works on items + frame.raster
@@ -165,7 +165,7 @@ export default function CanvasStage({
   });
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 10, overflow: "hidden", width: CSS_W }}>
+    <div style={{ border: "1px solid #d1d5db", borderRadius: 8, overflow: "hidden", width: CSS_W, background: "#fff" }}>
       {/* Visible stage */}
       <canvas
         ref={stageRef}

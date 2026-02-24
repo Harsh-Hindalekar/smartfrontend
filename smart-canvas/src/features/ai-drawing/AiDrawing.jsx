@@ -32,8 +32,8 @@ export default function AiDrawing() {
   const [textEditor, setTextEditor] = useState(null);
   // { id, x, y, value, fontSize, fontFamily, color }
 
-  const CANVAS_W = 1000;
-  const CANVAS_H = 600;
+  const CANVAS_W = 800;
+  const CANVAS_H = 500;
 
   /* ---------------- SETUP ---------------- */
   useEffect(() => {
@@ -727,6 +727,20 @@ export default function AiDrawing() {
           : "default";
 
   /* ---------------- UI (simple paint-like) ---------------- */
+  const btnStyle = {
+    background: "#fff",
+    color: "#1e293b",
+    border: "1px solid #d1d5db",
+    borderRadius: "6px",
+    padding: "4px 12px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500",
+    display: "flex",
+    alignItems: "center",
+    gap: "4px"
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -734,48 +748,49 @@ export default function AiDrawing() {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      padding: "20px",
+      padding: "12px",
       background: "#f1f5f9",
-      boxSizing: "border-box"
+      boxSizing: "border-box",
+      color: "#1e293b"
     }}>
       <div style={{ width: "100%", maxWidth: "1200px" }}>
         {/* Top bar */}
         <div
           style={{
             display: "flex",
-            gap: 8,
+            gap: 6,
             alignItems: "center",
-            padding: "8px 10px",
+            padding: "6px 8px",
             border: "1px solid #ddd",
             borderRadius: 8,
-            marginBottom: 10,
+            marginBottom: 8,
             background: "#f8fafc",
           }}
         >
-          <b style={{ marginRight: 10 }}>SmartCanvas</b>
+          <b style={{ marginRight: 10, color: "#0f172a" }}>SmartCanvas</b>
 
-          <button onClick={undo}>Undo</button>
-          <button onClick={redo}>Redo</button>
-
-          <div style={{ width: 1, height: 22, background: "#ddd" }} />
-
-          <button onClick={() => setAiMode((v) => !v)}>AI {aiMode ? "ON" : "OFF"}</button>
+          <button style={btnStyle} onClick={undo}>Undo</button>
+          <button style={btnStyle} onClick={redo}>Redo</button>
 
           <div style={{ width: 1, height: 22, background: "#ddd" }} />
 
-          <button onClick={bringFront} disabled={!selectedId}>
+          <button style={btnStyle} onClick={() => setAiMode((v) => !v)}>AI {aiMode ? "ON" : "OFF"}</button>
+
+          <div style={{ width: 1, height: 22, background: "#ddd" }} />
+
+          <button style={{ ...btnStyle, opacity: selectedId ? 1 : 0.5 }} onClick={bringFront} disabled={!selectedId}>
             Bring Front
           </button>
-          <button onClick={sendBack} disabled={!selectedId}>
+          <button style={{ ...btnStyle, opacity: selectedId ? 1 : 0.5 }} onClick={sendBack} disabled={!selectedId}>
             Send Back
           </button>
-          <button onClick={deleteSelected} disabled={!selectedId}>
+          <button style={{ ...btnStyle, opacity: selectedId ? 1 : 0.5 }} onClick={deleteSelected} disabled={!selectedId}>
             Delete
           </button>
 
           <div style={{ flex: 1 }} />
 
-          <label style={{ border: "1px solid #999", padding: "4px 8px", cursor: "pointer", borderRadius: 6 }}>
+          <label style={{ border: "1px solid #999", padding: "4px 8px", cursor: "pointer", borderRadius: 6, color: "#1e293b" }}>
             Import Image
             <input
               type="file"
@@ -785,8 +800,9 @@ export default function AiDrawing() {
             />
           </label>
 
-          <button onClick={savePNG}>Save PNG</button>
+          <button style={btnStyle} onClick={savePNG}>Save PNG</button>
           <button
+            style={{ ...btnStyle, background: "#fff1f2", color: "#be123c", borderColor: "#fecaca" }}
             onClick={() => {
               if (textEditor) commitTextEditor();
               commit([]);
@@ -802,11 +818,11 @@ export default function AiDrawing() {
           {/* Left tool rail */}
           <div
             style={{
-              width: 120,
+              width: 100,
               border: "1px solid #ddd",
               borderRadius: 8,
               background: "#fff",
-              padding: 8,
+              padding: 6,
               height: CANVAS_H + 2,
             }}
           >
@@ -831,6 +847,7 @@ export default function AiDrawing() {
                   borderRadius: 8,
                   border: "1px solid #e5e7eb",
                   background: tool === k ? "#e0f2fe" : "#fff",
+                  color: "#1e293b",
                   cursor: "pointer",
                 }}
               >
@@ -904,11 +921,11 @@ export default function AiDrawing() {
           {/* Right panel */}
           <div
             style={{
-              width: 220,
+              width: 180,
               border: "1px solid #ddd",
               borderRadius: 8,
               background: "#fff",
-              padding: 10,
+              padding: 8,
               height: CANVAS_H + 2,
             }}
           >
