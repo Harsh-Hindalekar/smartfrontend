@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getProfile } from "../utils/api";      
-
-<Route
-  path="/settings"
-  element={<ProtectedRoute><Settings /></ProtectedRoute>}
-/>
+export default function Settings() {
+  return (
+    <div style={{ padding: "2rem" }}>
+      <h2>Settings</h2>
+      <p>Settings page coming soon...</p>
+    </div>
+  );
+}

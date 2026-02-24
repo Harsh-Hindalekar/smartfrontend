@@ -320,8 +320,8 @@ export default function GestureCanvas() {
     handsRef.current = hands;
 
     return () => {
-      try { camera.stop(); } catch { }
-      try { hands.close(); } catch { }
+      try { camera.stop(); } catch { /* ignore */ }
+      try { hands.close(); } catch { /* ignore */ }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

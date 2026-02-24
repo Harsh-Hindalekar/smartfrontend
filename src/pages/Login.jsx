@@ -51,7 +51,7 @@ export default function Login() {
       } else {
         setError(data.detail || data.msg || "Login failed");
       }
-    } catch (err) {
+    } catch {
       setError("Network or server error");
     } finally {
       setLoading(false);

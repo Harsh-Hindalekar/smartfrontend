@@ -21,7 +21,6 @@ export function useSelectionDrag({
   cutBox,
   setCutBox,
   activeFrame,
-  frames,
   activeIndex,
   setFrames,
   selectedId,
@@ -167,7 +166,7 @@ export function useSelectionDrag({
   const onPointerUp = (e) => {
     const canvas = stageRef.current;
     if (canvas) {
-      try { canvas.releasePointerCapture(e.pointerId); } catch {}
+      try { canvas.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
     }
 
     // finalize CUT (uses frame.raster, not stage snapshot)

@@ -26,7 +26,7 @@ async function apiCall(endpoint, method = 'GET', body = null, token = null) {
   let response;
   try {
     response = await fetch(`${API_URL}${endpoint}`, config);
-  } catch (err) {
+  } catch {
     return { detail: "Network error / server not reachable" };
   }
 
@@ -56,7 +56,7 @@ export async function loginUser(username, password) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formData,
     });
-  } catch (err) {
+  } catch {
     return { detail: "Network error / server not reachable" };
   }
 

@@ -76,7 +76,7 @@ export default function Register() {
       } else {
         setError(data.detail || data.msg || "Registration failed");
       }
-    } catch (err) {
+    } catch {
       setError("Network or server error");
     } finally {
       setLoading(false);

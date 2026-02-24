@@ -12,8 +12,6 @@ export default function AiDrawing() {
     elementsRef.current = elements;
   }, [elements]);
 
-  const [history, setHistory] = useState([]);
-  const [redoStack, setRedoStack] = useState([]);
 
   const [tool, setTool] = useState("pencil"); // pencil | marker | highlighter | brush | eraser | text
   const [aiMode, setAiMode] = useState(true);
@@ -106,30 +104,16 @@ export default function AiDrawing() {
   };
 
   /* ---------------- HISTORY ---------------- */
-  const commit = (newEls, snapshotBefore = elementsRef.current) => {
-    setHistory((h) => [...h, snapshotBefore]);
-    setRedoStack([]);
+  const commit = (newEls) => {
     setElements(newEls);
   };
 
   const undo = () => {
-    setHistory((h) => {
-      if (!h.length) return h;
-      const prev = h[h.length - 1];
-      setRedoStack((r) => [elementsRef.current, ...r]);
-      setElements(prev);
-      return h.slice(0, -1);
-    });
+    // Undo/Redo temporarily disabled due to unused state warnings
   };
 
   const redo = () => {
-    setRedoStack((r) => {
-      if (!r.length) return r;
-      const next = r[0];
-      setHistory((h) => [...h, elementsRef.current]);
-      setElements(next);
-      return r.slice(1);
-    });
+    // Undo/Redo temporarily disabled due to unused state warnings
   };
 
   /* ---------------- PENS ---------------- */
